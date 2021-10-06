@@ -82,7 +82,7 @@ if test_alternate:
   # TEST ALTERNATE HEURISTIC
   print('Testing alternate heuristic with best_first search')
 
-  solved = 0; unsolved = []; benchmark1 = 7; benchmark2 = 15; timebound = 10 #time limit
+  solved = 0; unsolved = []; benchmark1 = 7; benchmark2 = 15; timebound = 5 #time limit
   man_dist_solns = [6, 23, 24, 12, 24, -99, -99, 41, 20, -99, -99, -99, -99, -99, -99, -99, -99, -99, -99, -99]
   better_solns = [6, 23, 20, 12, 24, 32, -99, 41, 20, -99, 73, 52, 64, 39, 40, 160, 139, -99, -99, -99]
   for i in range(0, len(PROBLEMS)):

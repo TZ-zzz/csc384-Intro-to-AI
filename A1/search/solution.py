@@ -97,7 +97,7 @@ def is_dead(state, box, s_x, s_y):
     if is_box(top, state):
         top_left = (top[0] - 1, top[1])
         top_right = (top[0] + 1, top[1])
-        if (left_ or right_) and  (is_wall_or_obs(top_left, state) or is_wall_or_obs(top_right, state)):
+        if (left_ or right_) and (is_wall_or_obs(top_left, state) or is_wall_or_obs(top_right, state)):
             return True
 
     if is_box(left, state):
@@ -109,7 +109,7 @@ def is_dead(state, box, s_x, s_y):
         bot_right = (right[0], right[1] + 1)
         top_right = (right[0], right[1] - 1)
 
-        if (bot_ or top_) or (is_wall_or_obs(bot_right, state) or is_wall_or_obs(top_right, state)):
+        if (bot_ or top_) and (is_wall_or_obs(bot_right, state) or is_wall_or_obs(top_right, state)):
             return True
 
     # check if one side against wall and no storage available for it
@@ -146,6 +146,7 @@ def is_dead(state, box, s_x, s_y):
 
 state_seen = {}
 
+
 def heur_alternate(state):
     # IMPLEMENT
     '''a better heuristic'''
@@ -168,7 +169,7 @@ def heur_alternate(state):
                 storage_dis = [abs(box[0] - storage[0]) + abs(box[1] - storage[1]) for storage in available_storage]
                 rob_dis = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
 
-                result += min(rob_dis) + (min(storage_dis) / 2)
+                result += min(rob_dis) + min(storage_dis)
         return result
 
     state_seen[state.boxes] = 0
@@ -190,8 +191,8 @@ def heur_alternate(state):
             result += len(set(state.obstacles) & set(surrounding))
             state_seen[state.boxes] += len(set(state.obstacles) & set(surrounding))
 
-            # robot_distance = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
-            # result += min(robot_distance)
+            robot_distance = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
+            result += min(robot_distance)
 
     return result
 
@@ -207,7 +208,6 @@ def fval_function(sN, weight):
     Provide a custom formula for f-value computation for Anytime Weighted A star.
     Returns the fval of the state contained in the sNode.
     Use this function stub to encode the standard form of weighted A* (i.e. g + w*h)
-
     @param sNode sN: A search node (containing a SokobanState)
     @param float weight: Weight given by Anytime Weighted A star
     @rtype: float
@@ -252,6 +252,7 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
             costbound = (best[0].gval, best[0].gval, best[0].gval)
 
     return best[0]
+
 
 def anytime_gbfs(initial_state, heur_fn, timebound=10):
     # IMPLEMENT
