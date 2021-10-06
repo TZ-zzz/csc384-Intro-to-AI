@@ -169,7 +169,7 @@ def heur_alternate(state):
                 storage_dis = [abs(box[0] - storage[0]) + abs(box[1] - storage[1]) for storage in available_storage]
                 rob_dis = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
 
-                result += min(rob_dis) + min(storage_dis)
+                result += min(rob_dis) + (min(storage_dis) / 2)
         return result
 
     state_seen[state.boxes] = 0
