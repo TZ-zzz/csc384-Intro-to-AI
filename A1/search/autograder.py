@@ -5,12 +5,12 @@ from sokoban import sokoban_goal_state, PROBLEMS
 import os
 
 #Select what to test
-test_time_astar = True
-test_time_gbfs = True
-test_manhattan = True
-test_fval_function = True
+test_time_astar = False
+test_time_gbfs = False
+test_manhattan = False
+test_fval_function = False
 test_anytime_gbfs = True
-test_alternate = True
+test_alternate = False
 test_anytime_weighted_astar = True
 
 if test_time_astar:
@@ -67,12 +67,12 @@ if test_manhattan:
         if man_dist == correct_man_dist[i]:
             solved += 1
         else:
-            unsolved.append(i)    
+            unsolved.append(i)
 
-    print("*************************************")  
+    print("*************************************")
     print("In the problem set provided, you calculated the correct Manhattan distance for {} states out of 20.".format(solved))
-    print("States that were incorrect: {}".format(unsolved))      
-    print("*************************************\n") 
+    print("States that were incorrect: {}".format(unsolved))
+    print("*************************************\n")
     ##############################################################
 
 
@@ -85,7 +85,7 @@ if test_alternate:
   solved = 0; unsolved = []; benchmark1 = 7; benchmark2 = 15; timebound = 5 #time limit
   man_dist_solns = [6, 23, 24, 12, 24, -99, -99, 41, 20, -99, -99, -99, -99, -99, -99, -99, -99, -99, -99, -99]
   better_solns = [6, 23, 20, 12, 24, 32, -99, 41, 20, -99, 73, 52, 64, 39, 40, 160, 139, -99, -99, -99]
-  for i in range(0, len(PROBLEMS)): 
+  for i in range(0, len(PROBLEMS)):
 
     print("*************************************")
     print("PROBLEM {}".format(i))
@@ -96,7 +96,7 @@ if test_alternate:
     final, stats = se.search(timebound)
 
     if final:
-      #final.print_path()  
+      #final.print_path()
       solved += 1
     else:
       unsolved.append(i)
@@ -109,19 +109,19 @@ if test_alternate:
   print("The better implementation solved {} out of {} practice problems given {} seconds.".format(benchmark2,len(PROBLEMS),timebound))
   print("*************************************\n")
   ##############################################################
-  
+
 
 if test_fval_function:
 
   test_state = SokobanState("START", 6, None, None, None, None, None, None, None)
 
   correct_fvals1 = [6, 11, 16]
-  correct_fvals2 = [1594, 28, 16]  
-  correct_fvals3 = [24, 18, 16]  
+  correct_fvals2 = [1594, 28, 16]
+  correct_fvals3 = [24, 18, 16]
 
   ##############################################################
   # TEST fval_function
-  print("*************************************") 
+  print("*************************************")
   print('Testing fval_function')
 
   solved1 = 0
@@ -129,16 +129,16 @@ if test_fval_function:
   for i in range(len(weights)):
 
     test_node = sNode(test_state, hval=10, fval_function=fval_function)
-    
+
     fval = round(fval_function(test_node, weights[i]),0)
     print ('Test', str(i), 'calculated fval:', str(fval), 'correct:', str(correct_fvals1[i]))
 
     if fval == correct_fvals1[i]:
-      solved1 +=1  
+      solved1 +=1
 
-  print("\n*************************************")  
-  print("Your fval_function calculated the correct fval for {} out of {} tests.".format(solved1, len(correct_fvals1)))  
-  print("*************************************\n") 
+  print("\n*************************************")
+  print("Your fval_function calculated the correct fval for {} out of {} tests.".format(solved1, len(correct_fvals1)))
+  print("*************************************\n")
 
   ##############################################################
 
@@ -152,9 +152,9 @@ if test_anytime_gbfs:
   # TEST ANYTIME GBFS
   print('Testing Anytime GBFS')
 
-  solved = 0; unsolved = []; benchmark = 0; timebound = 5 #5 second time limit 
+  solved = 0; unsolved = []; benchmark = 0; timebound = 5 #5 second time limit
   for i in range(0, len(PROBLEMS)):
-    print("*************************************")  
+    print("*************************************")
     print("PROBLEM {}".format(i))
 
     s0 = PROBLEMS[i] #Problems get harder as i gets bigger
@@ -164,17 +164,17 @@ if test_anytime_gbfs:
       #final.print_path() #if you want to see the path
       if final.gval <= len_benchmark[i] or len_benchmark[i] == -99: #replace len_benchmark with man_dist_solns to compare with manhattan dist.
         benchmark += 1
-      solved += 1 
+      solved += 1
     else:
-      unsolved.append(i)  
+      unsolved.append(i)
 
-  print("\n*************************************")  
-  print("Of {} initial problems, {} were solved in less than {} seconds by this solver.".format(len(PROBLEMS), solved, timebound))  
-  print("Of the {} problems that were solved, the cost of {} matched or outperformed the benchmark.".format(solved, benchmark))  
-  print("Problems that remain unsolved in the set are Problems: {}".format(unsolved))  
+  print("\n*************************************")
+  print("Of {} initial problems, {} were solved in less than {} seconds by this solver.".format(len(PROBLEMS), solved, timebound))
+  print("Of the {} problems that were solved, the cost of {} matched or outperformed the benchmark.".format(solved, benchmark))
+  print("Problems that remain unsolved in the set are Problems: {}".format(unsolved))
   print("The manhattan distance implementation solved 7 out of the 20 practice problems given 5 seconds.")
   print("The better implementation solved 16 out of the 20 practice problems given 5 seconds.")
-  print("*************************************\n") 
+  print("*************************************\n")
 
 if test_anytime_weighted_astar:
 
@@ -185,29 +185,29 @@ if test_anytime_weighted_astar:
   # TEST ANYTIME WEIGHTED A STAR
   print('Testing Anytime Weighted A Star')
 
-  solved = 0; unsolved = []; benchmark = 0; timebound = 5 #5 second time limit 
+  solved = 0; unsolved = []; benchmark = 0; timebound = 5 #5 second time limit
   for i in range(0, len(PROBLEMS)):
-    print("*************************************")  
+    print("*************************************")
     print("PROBLEM {}".format(i))
 
     s0 = PROBLEMS[i] #Problems get harder as i gets bigger
     weight = 10 #note that if you want to over-ride this initial weight in your implementation, you are welcome to!
     final = anytime_weighted_astar(s0, heur_fn=heur_alternate, weight=weight, timebound=timebound)
 
-    if final:   
-      #final.print_path()   
+    if final:
+      #final.print_path()
       if final.gval <= len_benchmark[i] or len_benchmark[i] == -99:
         benchmark += 1
-      solved += 1 
+      solved += 1
     else:
-      unsolved.append(i)  
+      unsolved.append(i)
 
-  print("\n*************************************")  
-  print("Of {} initial problems, {} were solved in less than {} seconds by this solver.".format(len(PROBLEMS), solved, timebound))  
-  print("Of the {} problems that were solved, the cost of {} matched or outperformed the benchmark.".format(solved, benchmark))  
-  print("Problems that remain unsolved in the set are Problems: {}".format(unsolved))  
+  print("\n*************************************")
+  print("Of {} initial problems, {} were solved in less than {} seconds by this solver.".format(len(PROBLEMS), solved, timebound))
+  print("Of the {} problems that were solved, the cost of {} matched or outperformed the benchmark.".format(solved, benchmark))
+  print("Problems that remain unsolved in the set are Problems: {}".format(unsolved))
   print("The manhattan distance implementation solved 7 out of the 20 practice problems given 5 seconds.")
   print("The better implementation solved 13 out of the 20 practice problems given 5 seconds.")
-  print("*************************************\n") 
+  print("*************************************\n")
   ##############################################################
 

@@ -6,60 +6,203 @@
 #   You may not remove any imports.
 #   You may not import or otherwise source any of your own files
 
-import os #for time functions
-from search import * #for search engines
-from sokoban import SokobanState, Direction, PROBLEMS #for Sokoban specific classes and problems
+import os  # for time functions
+from search import *  # for search engines
+from sokoban import SokobanState, Direction, \
+    PROBLEMS  # for Sokoban specific classes and problems
+
 
 def sokoban_goal_state(state):
-  '''
+    '''
   @return: Whether all boxes are stored.
   '''
-  for box in state.boxes:
-    if box not in state.storage:
-      return False
-  return True
+    for box in state.boxes:
+        if box not in state.storage:
+            return False
+    return True
+
 
 def heur_manhattan_distance(state):
-#IMPLEMENT
-    '''admissible sokoban puzzle heuristic: manhattan distance'''
+    # IMPLEMENT
+    """admissible sokoban puzzle heuristic: manhattan distance"""
     '''INPUT: a sokoban state'''
-    '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
-    #We want an admissible heuristic, which is an optimistic heuristic.
-    #It must never overestimate the cost to get from the current state to the goal.
-    #The sum of the Manhattan distances between each box that has yet to be stored and the storage point nearest to it is such a heuristic.
-    #When calculating distances, assume there are no obstacles on the grid.
-    #You should implement this heuristic function exactly, even if it is tempting to improve it.
-    #Your function should return a numeric value; this is the estimate of the distance to the goal.
-    return 0
+    '''OUTPUT: a numeric value that serves as an estimate of the distance of 
+    the state to the goal. '''
+    # We want an admissible heuristic, which is an optimistic heuristic.
+    # It must never overestimate the cost to get from the current state to the goal.
+    # The sum of the Manhattan distances between each box that has yet to be stored and the storage point nearest to it is such a heuristic.
+    # When calculating distances, assume there are no obstacles on the grid.
+    # You should implement this heuristic function exactly, even if it is tempting to improve it.
+    # Your function should return a numeric value; this is the estimate of the distance to the goal.
+    sum_distance = 0
+    for box in state.boxes:
+        nearest = float('inf')
+        if box not in state.storage:
+            for storage in state.storage:
+                distance = abs(box[0] - storage[0]) + abs(box[1] - storage[1])
+                if distance < nearest:
+                    nearest = distance
+            sum_distance += nearest
+
+    return sum_distance
 
 
-#SOKOBAN HEURISTICS
+# SOKOBAN HEURISTICS
 def trivial_heuristic(state):
-  '''trivial admissible sokoban heuristic'''
-  '''INPUT: a sokoban state'''
-  '''OUTPUT: a numeric value that serves as an estimate of the distance of the state (# of moves required to get) to the goal.'''
-  count = 0
-  for box in state.boxes:
-    if box not in state.storage:
-        count += 1
-  return count
+    '''trivial admissible sokoban heuristic'''
+    '''INPUT: a sokoban state'''
+    '''OUTPUT: a numeric value that serves as an estimate of the distance of the state (# of moves required to get) to the goal.'''
+    count = 0
+    for box in state.boxes:
+        if box not in state.storage:
+            count += 1
+    return count
+
+
+def is_wall(position, state):
+    return (position[0] < 0 or position[0] >= state.width) or (position[1] < 0 or position[1] >= state.width)
+
+
+def is_o(position, state):
+    return position in state.obstacles
+
+
+def is_wall_or_obs(position, state):
+    return is_o(position, state) or is_wall(position, state)
+
+
+def is_box(position, state):
+    return position in state.boxes
+
+
+def is_dead(state, box, s_x, s_y):
+    top = (box[0], box[1] - 1)
+    bot = (box[0], box[1] + 1)
+    left = (box[0] - 1, box[1])
+    right = (box[0] + 1, box[1])
+
+    bot_ = is_wall_or_obs(bot, state)
+    top_ = is_wall_or_obs(top, state)
+    left_ = is_wall_or_obs(left, state)
+    right_ = is_wall_or_obs(right, state)
+
+    # check if box is at corner
+    if (top_ or bot_) and (left_ or right_):
+        return True
+
+    # check if there are box boxes adjacent to each other against wall or obstacles
+
+    if is_box(bot, state):
+        bot_left = (bot[0] - 1, bot[1])
+        bot_right = (bot[0] + 1, bot[1])
+        if (left_ and is_wall_or_obs(bot_left, state)) or (right_ and is_wall_or_obs(bot_right, state)):
+            return True
+
+    if is_box(top, state):
+        top_left = (top[0] - 1, top[1])
+        top_right = (top[0] + 1, top[1])
+        if (left_ and is_wall_or_obs(top_left, state)) or (right_ and is_wall_or_obs(top_right, state)):
+            return True
+
+    if is_box(left, state):
+        bot_left = (left[0], left[1] + 1)
+        top_left = (left[0], left[1] - 1)
+        if (bot_ and is_wall_or_obs(bot_left, state)) or (top_ and is_wall_or_obs(top_left, state)):
+            return True
+    if is_box(right, state):
+        bot_right = (right[0], right[1] + 1)
+        top_right = (right[0], right[1] - 1)
+
+        if (bot_ and is_wall_or_obs(bot_right, state)) or (top_ and is_wall_or_obs(top_right, state)):
+            return True
+
+    # check if one side against wall and no storage available for it
+    if is_wall(top, state) or is_wall(bot, state):
+        if box[1] not in s_y:
+            return True
+        num_boxes = 0
+        num_storage = 0
+        for box_ in state.boxes:
+            if box_[0] == box[0]:
+                num_boxes += 1
+        for storage in state.storage:
+            if storage[0] == box[0]:
+                num_storage += 1
+        if num_boxes < num_storage:
+            return True
+
+    if is_wall(left, state) or is_wall(right, state):
+        if box[0] not in s_x:
+            return True
+        num_boxes = 0
+        num_storage = 0
+        for box_ in state.boxes:
+            if box_[1] == box[1]:
+                num_boxes += 1
+        for storage in state.storage:
+            if storage[1] == box[1]:
+                num_storage += 1
+        if num_boxes < num_storage:
+            return True
+
+    return False
+
+
+state_seen = 0
+
 
 def heur_alternate(state):
-#IMPLEMENT
+    # IMPLEMENT
     '''a better heuristic'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
-    #heur_manhattan_distance has flaws.
-    #Write a heuristic function that improves upon heur_manhattan_distance to estimate distance between the current state and the goal.
-    #Your function should return a numeric value for the estimate of the distance to the goal.
-    return 0
+    # heur_manhattan_distance has flaws.
+    # Write a heuristic function that improves upon heur_manhattan_distance to estimate distance between the current state and the goal.
+    # Your function should return a numeric value for the estimate of the distance to the goal.
+
+    global state_seen
+    result = 0
+    if state.parent is not None and state.boxes == state.parent.boxes:
+        if state_seen == float('inf'):
+            return float('inf')
+
+        result = state_seen
+        for box in state.boxes:
+            if box not in state.storage:
+                rob_dis = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
+                result += min(rob_dis)
+        return result
+
+    state_seen = 0
+    s_x = [s[0] for s in state.storage]
+    s_y = [s[1] for s in state.storage]
+    for box in state.boxes:
+        if box not in state.storage:
+            if is_dead(state, box, s_x, s_y):
+                state_seen = float('inf')
+                return float('inf')
+            available_storage = set(state.storage).difference(set(state.storage) & set(state.boxes))
+            storage_distance = [abs(box[0] - storage[0]) + abs(box[1] - storage[1]) for storage in available_storage]
+            minimum = min(storage_distance)
+            result += minimum
+            state_seen += minimum
+
+            surrounding = ((box[0] - 1, box[1] - 1), (box[0] - 1, box[1]), (box[0] - 1, box[1] + 1), (box[0], box[1] - 1),
+                           (box[0], box[1] + 1), (box[0] + 1, box[1] - 1), (box[0] + 1, box[1]), (box[0] + 1, box[1] + 1))
+            result += len(set(state.obstacles) & set(surrounding))
+
+            robot_distance = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
+            result += min(robot_distance)
+    return result
+
 
 def heur_zero(state):
     '''Zero Heuristic can be used to make A* search perform uniform cost search'''
     return 0
 
+
 def fval_function(sN, weight):
-#IMPLEMENT
+    # IMPLEMENT
     """
     Provide a custom formula for f-value computation for Anytime Weighted A star.
     Returns the fval of the state contained in the sNode.
@@ -69,28 +212,73 @@ def fval_function(sN, weight):
     @param float weight: Weight given by Anytime Weighted A star
     @rtype: float
     """
-  
-    #Many searches will explore nodes (or states) that are ordered by their f-value.
-    #For UCS, the fvalue is the same as the gval of the state. For best-first search, the fvalue is the hval of the state.
-    #You can use this function to create an alternate f-value for states; this must be a function of the state and the weight.
-    #The function must return a numeric f-value.
-    #The value will determine your state's position on the Frontier list during a 'custom' search.
-    #You must initialize your search engine object as a 'custom' search engine if you supply a custom fval function.
-    return 0
 
-def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound = 10):
-#IMPLEMENT
-  '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
-  '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
-  '''OUTPUT: A goal state (if a goal is found), else False'''
-  '''implementation of anytime weighted astar algorithm'''
+    # Many searches will explore nodes (or states) that are ordered by their f-value.
+    # For UCS, the fvalue is the same as the gval of the state. For best-first search, the fvalue is the hval of the state.
+    # You can use this function to create an alternate f-value for states; this must be a function of the state and the weight.
+    # The function must return a numeric f-value.
+    # The value will determine your state's position on the Frontier list during a 'custom' search.
+    # You must initialize your search engine object as a 'custom' search engine if you supply a custom fval function.
+    return sN.gval + weight * sN.hval
 
-  return False
 
-def anytime_gbfs(initial_state, heur_fn, timebound = 10):
-#IMPLEMENT
-  '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
-  '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
-  '''OUTPUT: A goal state (if a goal is found), else False'''
-  '''implementation of anytime greedy best-first search'''
-  return False
+def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
+    # IMPLEMENT
+    '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
+    '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
+    '''OUTPUT: A goal state (if a goal is found), else False'''
+    '''implementation of anytime weighted astar algorithm'''
+
+    weight = (initial_state.width + initial_state.height) // 2
+    wrapped_fval_function = (lambda sN: fval_function(sN, weight))
+    weighted_astar = SearchEngine('custom', 'full')
+    weighted_astar.init_search(initial_state, sokoban_goal_state, heur_fn,
+                               wrapped_fval_function)
+    start_time = os.times()[0]
+    best = False
+    result = weighted_astar.search(timebound)
+
+    costbound = (float('inf'), float('inf'), float('inf'))
+    while timebound > os.times()[0] - start_time:
+        if not result[0]:
+            break
+        elif result[0].gval < costbound[2]:
+
+            timebound -= os.times()[0] - start_time
+            costbound = (result[0].gval, result[0].gval, result[0].gval)
+            best = result[0]
+            weight = max(1, weight // 2)
+            wrapped_fval_function = (lambda sN: fval_function(sN, weight))
+            weighted_astar.init_search(initial_state, sokoban_goal_state,
+                                       heur_fn, wrapped_fval_function)
+            result = weighted_astar.search(timebound, costbound)
+        elif result[0].gval >= costbound[0]:
+            break
+    return best
+
+
+def anytime_gbfs(initial_state, heur_fn, timebound=10):
+    # IMPLEMENT
+    '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
+    '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
+    '''OUTPUT: A goal state (if a goal is found), else False'''
+    '''implementation of anytime greedy best-first search'''
+    start_time = os.times()[0]
+
+    best_first = SearchEngine("best_first", "full")
+    best_first.init_search(initial_state, sokoban_goal_state, heur_fn)
+    best = False
+    result = best_first.search(timebound)
+    costbound = (float('inf'), float('inf'), float('inf'))
+
+    while timebound > os.times()[0] - start_time:
+        if not result[0]:
+            break
+        elif result[0].gval < costbound[0]:
+            timebound -= os.times()[0] - start_time
+            costbound = (result[0].gval, float('inf'), float('inf'))
+            best = result[0]
+            result = best_first.search(timebound, costbound)
+        elif result[0].gval >= costbound[0]:
+            break
+    return best
