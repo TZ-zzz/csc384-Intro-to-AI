@@ -91,61 +91,60 @@ def is_dead(state, box, s_x, s_y):
     if is_box(bot, state):
         bot_left = (bot[0] - 1, bot[1])
         bot_right = (bot[0] + 1, bot[1])
-        if (left_ and is_wall_or_obs(bot_left, state)) or (right_ and is_wall_or_obs(bot_right, state)):
+        if (left_ or right_) and (is_wall_or_obs(bot_left, state) or is_wall_or_obs(bot_right, state)):
             return True
 
     if is_box(top, state):
         top_left = (top[0] - 1, top[1])
         top_right = (top[0] + 1, top[1])
-        if (left_ and is_wall_or_obs(top_left, state)) or (right_ and is_wall_or_obs(top_right, state)):
+        if (left_ or right_) and  (is_wall_or_obs(top_left, state) or is_wall_or_obs(top_right, state)):
             return True
 
     if is_box(left, state):
         bot_left = (left[0], left[1] + 1)
         top_left = (left[0], left[1] - 1)
-        if (bot_ and is_wall_or_obs(bot_left, state)) or (top_ and is_wall_or_obs(top_left, state)):
+        if (bot_ or top_) and (is_wall_or_obs(bot_left, state) or is_wall_or_obs(top_left, state)):
             return True
     if is_box(right, state):
         bot_right = (right[0], right[1] + 1)
         top_right = (right[0], right[1] - 1)
 
-        if (bot_ and is_wall_or_obs(bot_right, state)) or (top_ and is_wall_or_obs(top_right, state)):
+        if (bot_ or top_) or (is_wall_or_obs(bot_right, state) or is_wall_or_obs(top_right, state)):
             return True
 
     # check if one side against wall and no storage available for it
     if is_wall(top, state) or is_wall(bot, state):
         if box[1] not in s_y:
             return True
-        # num_boxes = 0
-        # num_storage = 0
-        # for box_ in state.boxes:
-        #     if box_[0] == box[0]:
-        #         num_boxes += 1
-        # for storage in state.storage:
-        #     if storage[0] == box[0]:
-        #         num_storage += 1
-        # if num_boxes < num_storage:
-        #     return True
+        num_boxes = 0
+        num_storage = 0
+        for box_ in state.boxes:
+            if box_[0] == box[0]:
+                num_boxes += 1
+        for storage in state.storage:
+            if storage[0] == box[0]:
+                num_storage += 1
+        if num_boxes < num_storage:
+            return True
 
     if is_wall(left, state) or is_wall(right, state):
         if box[0] not in s_x:
             return True
-        # num_boxes = 0
-        # num_storage = 0
-        # for box_ in state.boxes:
-        #     if box_[1] == box[1]:
-        #         num_boxes += 1
-        # for storage in state.storage:
-        #     if storage[1] == box[1]:
-        #         num_storage += 1
-        # if num_boxes < num_storage:
-        #     return True
+        num_boxes = 0
+        num_storage = 0
+        for box_ in state.boxes:
+            if box_[1] == box[1]:
+                num_boxes += 1
+        for storage in state.storage:
+            if storage[1] == box[1]:
+                num_storage += 1
+        if num_boxes < num_storage:
+            return True
 
     return False
 
 
-state_seen = 0
-
+state_seen = {}
 
 def heur_alternate(state):
     # IMPLEMENT
@@ -159,40 +158,40 @@ def heur_alternate(state):
     global state_seen
     result = 0
     if state.parent is not None and state.boxes == state.parent.boxes:
-        if state_seen == float('inf'):
+        if state_seen[state.boxes] == float('inf'):
             return float('inf')
 
-        result = state_seen
+        result = state_seen[state.boxes]
         for box in state.boxes:
             if box not in state.storage:
                 available_storage = set(state.storage).difference(set(state.storage) & set(state.boxes))
-                storage_dis = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in available_storage]
+                storage_dis = [abs(box[0] - storage[0]) + abs(box[1] - storage[1]) for storage in available_storage]
                 rob_dis = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
 
-                result += min(rob_dis) + min(storage_dis)
+                result += min(rob_dis) + (min(storage_dis) / 2)
         return result
 
-    state_seen = 0
+    state_seen[state.boxes] = 0
     s_x = [s[0] for s in state.storage]
     s_y = [s[1] for s in state.storage]
     for box in state.boxes:
         if box not in state.storage:
             if is_dead(state, box, s_x, s_y):
-                state_seen = float('inf')
+                state_seen[state.boxes] = float('inf')
                 return float('inf')
 
             available_storage = set(state.storage).difference(set(state.storage) & set(state.boxes))
             storage_distance = [abs(box[0] - storage[0]) + abs(box[1] - storage[1]) for storage in available_storage]
             minimum = min(storage_distance)
             result += minimum
-            state_seen += minimum
+            state_seen[state.boxes] += minimum
             surrounding = ((box[0] - 1, box[1] - 1), (box[0] - 1, box[1]), (box[0] - 1, box[1] + 1), (box[0], box[1] - 1),
                            (box[0], box[1] + 1), (box[0] + 1, box[1] - 1), (box[0] + 1, box[1]), (box[0] + 1, box[1] + 1))
             result += len(set(state.obstacles) & set(surrounding))
-            state_seen += len(set(state.obstacles) & set(surrounding))
+            state_seen[state.boxes] += len(set(state.obstacles) & set(surrounding))
 
-            robot_distance = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
-            result += min(robot_distance)
+            # robot_distance = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
+            # result += min(robot_distance)
 
     return result
 
@@ -229,7 +228,7 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False'''
     '''implementation of anytime weighted astar algorithm'''
-    weight = (initial_state.width + initial_state.height) / 2
+    weight = (initial_state.width + initial_state.height) // 2
     wrapped_fval_function = (lambda sN: fval_function(sN, weight))
     weighted_astar = SearchEngine('custom', 'full')
     weighted_astar.init_search(initial_state, sokoban_goal_state, heur_fn, wrapped_fval_function)
@@ -253,7 +252,6 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
             costbound = (best[0].gval, best[0].gval, best[0].gval)
 
     return best[0]
-
 
 def anytime_gbfs(initial_state, heur_fn, timebound=10):
     # IMPLEMENT
