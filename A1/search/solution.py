@@ -63,12 +63,8 @@ def is_wall(position, state):
     return (position[0] < 0 or position[0] >= state.width) or (position[1] < 0 or position[1] >= state.width)
 
 
-def is_o(position, state):
-    return position in state.obstacles
-
-
 def is_wall_or_obs(position, state):
-    return is_o(position, state) or is_wall(position, state)
+    return position in state.obstacles or is_wall(position, state)
 
 
 def is_box(position, state):
@@ -120,30 +116,30 @@ def is_dead(state, box, s_x, s_y):
     if is_wall(top, state) or is_wall(bot, state):
         if box[1] not in s_y:
             return True
-        num_boxes = 0
-        num_storage = 0
-        for box_ in state.boxes:
-            if box_[0] == box[0]:
-                num_boxes += 1
-        for storage in state.storage:
-            if storage[0] == box[0]:
-                num_storage += 1
-        if num_boxes < num_storage:
-            return True
+        # num_boxes = 0
+        # num_storage = 0
+        # for box_ in state.boxes:
+        #     if box_[0] == box[0]:
+        #         num_boxes += 1
+        # for storage in state.storage:
+        #     if storage[0] == box[0]:
+        #         num_storage += 1
+        # if num_boxes < num_storage:
+        #     return True
 
     if is_wall(left, state) or is_wall(right, state):
         if box[0] not in s_x:
             return True
-        num_boxes = 0
-        num_storage = 0
-        for box_ in state.boxes:
-            if box_[1] == box[1]:
-                num_boxes += 1
-        for storage in state.storage:
-            if storage[1] == box[1]:
-                num_storage += 1
-        if num_boxes < num_storage:
-            return True
+        # num_boxes = 0
+        # num_storage = 0
+        # for box_ in state.boxes:
+        #     if box_[1] == box[1]:
+        #         num_boxes += 1
+        # for storage in state.storage:
+        #     if storage[1] == box[1]:
+        #         num_storage += 1
+        # if num_boxes < num_storage:
+        #     return True
 
     return False
 
@@ -169,8 +165,11 @@ def heur_alternate(state):
         result = state_seen
         for box in state.boxes:
             if box not in state.storage:
+                available_storage = set(state.storage).difference(set(state.storage) & set(state.boxes))
+                storage_dis = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in available_storage]
                 rob_dis = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
-                result += min(rob_dis)
+
+                result += min(rob_dis) + min(storage_dis)
         return result
 
     state_seen = 0
@@ -181,18 +180,20 @@ def heur_alternate(state):
             if is_dead(state, box, s_x, s_y):
                 state_seen = float('inf')
                 return float('inf')
+
             available_storage = set(state.storage).difference(set(state.storage) & set(state.boxes))
             storage_distance = [abs(box[0] - storage[0]) + abs(box[1] - storage[1]) for storage in available_storage]
             minimum = min(storage_distance)
             result += minimum
             state_seen += minimum
-
             surrounding = ((box[0] - 1, box[1] - 1), (box[0] - 1, box[1]), (box[0] - 1, box[1] + 1), (box[0], box[1] - 1),
                            (box[0], box[1] + 1), (box[0] + 1, box[1] - 1), (box[0] + 1, box[1]), (box[0] + 1, box[1] + 1))
             result += len(set(state.obstacles) & set(surrounding))
+            state_seen += len(set(state.obstacles) & set(surrounding))
 
             robot_distance = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
             result += min(robot_distance)
+
     return result
 
 
@@ -228,33 +229,30 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False'''
     '''implementation of anytime weighted astar algorithm'''
-
-    weight = (initial_state.width + initial_state.height) // 2
+    weight = (initial_state.width + initial_state.height) / 2
     wrapped_fval_function = (lambda sN: fval_function(sN, weight))
     weighted_astar = SearchEngine('custom', 'full')
-    weighted_astar.init_search(initial_state, sokoban_goal_state, heur_fn,
-                               wrapped_fval_function)
+    weighted_astar.init_search(initial_state, sokoban_goal_state, heur_fn, wrapped_fval_function)
+    # set the end time based on current time and timebound
     start_time = os.times()[0]
-    best = False
-    result = weighted_astar.search(timebound)
+    end_time = start_time + timebound
+    best = weighted_astar.search(timebound)
+    if os.times()[0] >= end_time or best[0] is False:
+        return best[0]
 
-    costbound = (float('inf'), float('inf'), float('inf'))
-    while timebound > os.times()[0] - start_time:
-        if not result[0]:
-            break
-        elif result[0].gval < costbound[2]:
+    costbound = (best[0].gval, best[0].gval, best[0].gval)
+    while end_time > os.times()[0]:
+        timebound = end_time - os.times()[0]
+        if weight > 1:
+            weight /= 2
+        wrapped_fval_function = (lambda sN: fval_function(sN, weight))
+        weighted_astar.init_search(initial_state, sokoban_goal_state, heur_fn, wrapped_fval_function)
+        result = weighted_astar.search(timebound, costbound)
+        if result[0] is not False:
+            best = result
+            costbound = (best[0].gval, best[0].gval, best[0].gval)
 
-            timebound -= os.times()[0] - start_time
-            costbound = (result[0].gval, result[0].gval, result[0].gval)
-            best = result[0]
-            weight = max(1, weight // 2)
-            wrapped_fval_function = (lambda sN: fval_function(sN, weight))
-            weighted_astar.init_search(initial_state, sokoban_goal_state,
-                                       heur_fn, wrapped_fval_function)
-            result = weighted_astar.search(timebound, costbound)
-        elif result[0].gval >= costbound[0]:
-            break
-    return best
+    return best[0]
 
 
 def anytime_gbfs(initial_state, heur_fn, timebound=10):
@@ -263,22 +261,22 @@ def anytime_gbfs(initial_state, heur_fn, timebound=10):
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False'''
     '''implementation of anytime greedy best-first search'''
+    # set the end time based on current time and timebound
     start_time = os.times()[0]
+    end_time = start_time + timebound
 
-    best_first = SearchEngine("best_first", "full")
+    best_first = SearchEngine('best_first', 'full')
     best_first.init_search(initial_state, sokoban_goal_state, heur_fn)
-    best = False
-    result = best_first.search(timebound)
-    costbound = (float('inf'), float('inf'), float('inf'))
+    best = best_first.search(end_time - os.times()[0], None)
+    # if the first search run out of time
+    if os.times()[0] >= end_time or best[0] is False:
+        return best[0]
+    costbound = (best[0].gval, float('inf'), float('inf'))
+    while end_time > os.times()[0]:
+        timebound = end_time - os.times()[0]
+        result = best_first.search(timebound, costbound)
+        if result[0] is not False:
+            best = result
+            costbound = (best[0].gval, float('inf'), float('inf'))
 
-    while timebound > os.times()[0] - start_time:
-        if not result[0]:
-            break
-        elif result[0].gval < costbound[0]:
-            timebound -= os.times()[0] - start_time
-            costbound = (result[0].gval, float('inf'), float('inf'))
-            best = result[0]
-            result = best_first.search(timebound, costbound)
-        elif result[0].gval >= costbound[0]:
-            break
-    return best
+    return best[0]

@@ -25,7 +25,7 @@ class SokobanState(StateSpace):
         @param robots: A tuple of all the robots' locations. Each robot is denoted by its index in the list.
         @param boxes: A frozenset of all the boxes.
         @param storage: A frozenset of all the storage points.
-        @param obstacles: A frozenset of all the impassable obstacles.
+            @param obstacles: A frozenset of all the impassable obstacles.
         '''
         StateSpace.__init__(self, action, gval, parent)
         self.width = width
