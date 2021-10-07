@@ -5,10 +5,10 @@ from sokoban import sokoban_goal_state, PROBLEMS
 import os
 
 #Select what to test
-test_time_astar = False
-test_time_gbfs = False
-test_manhattan = False
-test_fval_function = False
+test_time_astar = True
+test_time_gbfs = True
+test_manhattan = True
+test_fval_function = True
 test_anytime_gbfs = True
 test_alternate = True
 test_anytime_weighted_astar = True
@@ -195,7 +195,8 @@ if test_anytime_weighted_astar:
     final = anytime_weighted_astar(s0, heur_fn=heur_alternate, weight=weight, timebound=timebound)
 
     if final:
-      #final.print_path()
+      # final.print_path()
+      print(final.gval, len_benchmark[i])
       if final.gval <= len_benchmark[i] or len_benchmark[i] == -99:
         benchmark += 1
       solved += 1
@@ -211,3 +212,28 @@ if test_anytime_weighted_astar:
   print("*************************************\n")
   ##############################################################
 
+# def display(state: SokobanState):
+#     boxes = [b for b in state.boxes]
+#     obstacles = [o for o in state.obstacles]
+#     storage = [s for s in state.storage]
+#     robots = [r for r in state.robots]
+#
+#
+#     for x in range(state.width):
+#       for y in range(state.height):
+#         if (x,y) in boxes:
+#           print(' B ', end='')
+#         elif (x,y) in obstacles:
+#           print(' O ', end='')
+#         elif (x,y) in storage:
+#           print(' S ', end='')
+#         elif (x,y) in robots:
+#           print(' R ', end='')
+#         else:
+#           print(' _ ', end='')
+#       print()
+
+# for i in range(len(PROBLEMS)):
+#
+#   display(PROBLEMS[i])
+#   print("\n\n")

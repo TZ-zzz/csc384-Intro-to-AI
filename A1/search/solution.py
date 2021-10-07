@@ -82,11 +82,8 @@ def is_dead(state, box, s_x, s_y):
     left_ = is_wall_or_obs(left, state)
     right_ = is_wall_or_obs(right, state)
 
-    # check if box is at corner
     if (top_ or bot_) and (left_ or right_):
         return True
-
-    # check if there are box boxes adjacent to each other against wall or obstacles
 
     if is_box(bot, state):
         bot_left = (bot[0] - 1, bot[1])
@@ -144,6 +141,34 @@ def is_dead(state, box, s_x, s_y):
     return False
 
 
+# def need_change_d(state, robot):
+#     top = (robot[0], robot[1] - 1)
+#     bot = (robot[0], robot[1] + 1)
+#     left = (robot[0] - 1, robot[1])
+#     right = (robot[0] + 1, robot[1])
+#
+#     if is_box(top, state) and top not in state.storage:
+#         if is_wall_or_obs((top[0], top[1] - 1), state) or is_box((top[0], top[1] - 1), state):
+#             return True
+#         elif (top[0] - 1, top[1]) in state.storage or (top[0] + 1, top[1]) in state.storage:
+#             return True
+#     if is_box(bot, state) and bot not in state.storage:
+#         if is_wall_or_obs((bot[0], bot[1] + 1), state) or is_box((bot[0], bot[1] - 1), state):
+#             return True
+#         elif (bot[0] - 1, bot[1]) in state.storage or (bot[0] + 1, bot[1]) in state.storage:
+#             return True
+#     if is_box(left, state) and left not in state.storage:
+#         if is_wall_or_obs((left[0] - 1, left[1]), state) or is_box((left[0] - 1, left[1]), state):
+#             return True
+#         elif (left[0], left[1] - 1) in state.storage or (left[0], left[1] + 1) in state.storage:
+#             return True
+#     if is_box(right, state) and right not in state.storage:
+#         if is_wall_or_obs((right[0] + 1, right[1]), state) or is_box((right[0] + 1, right[1]), state):
+#             return True
+#         elif (right[0], right[1] - 1) in state.storage or (right[0], right[1] + 1) in state.storage:
+#             return True
+
+
 state_seen = {}
 
 
@@ -155,7 +180,6 @@ def heur_alternate(state):
     # heur_manhattan_distance has flaws.
     # Write a heuristic function that improves upon heur_manhattan_distance to estimate distance between the current state and the goal.
     # Your function should return a numeric value for the estimate of the distance to the goal.
-
     global state_seen
     result = 0
     if state.parent is not None and state.boxes == state.parent.boxes:
@@ -168,8 +192,8 @@ def heur_alternate(state):
                 available_storage = set(state.storage).difference(set(state.storage) & set(state.boxes))
                 storage_dis = [abs(box[0] - storage[0]) + abs(box[1] - storage[1]) for storage in available_storage]
                 rob_dis = [abs(box[0] - robot[0]) + abs(box[1] - robot[1]) for robot in state.robots]
-
                 result += min(rob_dis) + (min(storage_dis) / 2)
+
         return result
 
     state_seen[state.boxes] = 0
@@ -228,7 +252,7 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False'''
     '''implementation of anytime weighted astar algorithm'''
-    weight = (initial_state.width + initial_state.height) // 2
+    weight = (initial_state.width + initial_state.height)
     wrapped_fval_function = (lambda sN: fval_function(sN, weight))
     weighted_astar = SearchEngine('custom', 'full')
     weighted_astar.init_search(initial_state, sokoban_goal_state, heur_fn, wrapped_fval_function)
