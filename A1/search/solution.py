@@ -274,7 +274,6 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
         if result[0] is not False:
             best = result
             costbound = (best[0].gval, best[0].gval, best[0].gval)
-
     return best[0]
 
 

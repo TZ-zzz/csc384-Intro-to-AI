@@ -1,1 +1,14 @@
 /** WRITE YOUR TIPS IN THIS FILE **/
+
+1. The first thing we should do is checking deadlocks. If there is a box at a corner and not in the storage point, or
+    it is at a wall but no storage points along the same wall, the state won't reach the goal which means we need to
+    prune these states. Also, combinations of obstacle, boxes and walls can also lead to deadlocks, avoid as much as
+    you can.
+
+2. When robots are not near boxes that not in storages, they will move without pushing boxes. We need to make them approach
+    those boxes instead of just wandering around without purpose and wasting time.
+
+2. We need to make heuristic function efficient to keep time. One easiest way is creating a hash table and each time
+    the search engine meets states with same locations of boxes (only robots moved), we only need to look up the information
+    instead of calculate it again.
+
