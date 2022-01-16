@@ -704,14 +704,14 @@ def question_6():
 
     import time
 
-    do_test(0, "python plane_scheduling.py -a GAC -c 1", p1, 1, 1*60)
-    do_test(1, "python plane_scheduling.py -a GAC -c 2", p2, 2, 1*60)
-    do_test(2, "python plane_scheduling.py -a GAC -c 3", p3, 24,1*60)
-    do_test(3, "python plane_scheduling.py -a GAC -c 4", p4, 0, 1*60)
-    do_test(4, "python plane_scheduling.py -a GAC -c 4", p5, 1, 1*60)
-    do_test(5, "python plane_scheduling.py -a GAC -c 6", p6, 9, 1*60)
-    do_test(6, "python plane_scheduling.py -a GAC 7", p7, 1, 4*60, False)
-    do_test(7, "python plane_scheduling.py -a GAC 7 -c", p7, 192, 5*60)
+    do_test(0, "python plane_scheduling.py -a BT -c 1", p1, 1, 1*60)
+    do_test(1, "python plane_scheduling.py -a FC -c 2", p2, 2, 1*60)
+    do_test(2, "python plane_scheduling.py -a FC -c 3", p3, 24,1*60)
+    do_test(3, "python plane_scheduling.py -a FC -c 4", p4, 0, 1*60)
+    do_test(4, "python plane_scheduling.py -a FC -c 4", p5, 1, 1*60)
+    do_test(5, "python plane_scheduling.py -a FC -c 6", p6, 9, 1*60)
+    do_test(6, "python plane_scheduling.py -a FC 7", p7, 1, 4*60, False)
+    do_test(7, "python plane_scheduling.py -a FC 7 -c", p7, 192, 5*60)
 
     grades[5] = 0
     if sum(fails[:4]) != 0:

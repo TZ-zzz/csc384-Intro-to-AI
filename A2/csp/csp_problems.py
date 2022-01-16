@@ -389,7 +389,7 @@ def solve_planes(planes_problem, algo, allsolns,
 
     csp = CSP("plane scheduling", flatten_variables, constraints)  # set to to your CSP
     # invoke search with the passed parameters
-    solutions, num_nodes = bt_search(algo, csp, variableHeuristic, allsolns, trace)
+    solutions, num_nodes = bt_search("GAC", csp, variableHeuristic, allsolns, trace)
 
     # Convert each solution into a list of lists specifying a schedule
     # for each plane in the format described above.
